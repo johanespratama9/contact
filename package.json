@@ -1,7 +1,7 @@
 {
   "name": "contact",
   "version": "0.1.0",
-  "homepage": "http://contact.github.io/contact",
+  "homepage": "http://johanespratama9.github.io/contact",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
