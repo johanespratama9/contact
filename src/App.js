@@ -4,72 +4,10 @@ import axios from 'axios';
 import $ from 'jquery';
 import 'datatables.net-bs4';
 
-function ContactDetail({ contactId }) {
-  const [contact, setContact] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContact = async () => {
-      try {
-        const response = await axios.get(`https://contact.herokuapp.com/contact/${contactId}`);
-        setContact(response.data.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching contact:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchContact();
-  }, [contactId]);
-
-  return (
-    <div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div>
-          <h2>Contact Detail</h2>
-          <table className="table">
-            <tbody>
-              <tr>
-                <td>ID:</td>
-                <td>{contact.id}</td>
-              </tr>
-              <tr>
-                <td>First Name:</td>
-                <td>{contact.firstName}</td>
-              </tr>
-              <tr>
-                <td>Last Name:</td>
-                <td>{contact.lastName}</td>
-              </tr>
-              <tr>
-                <td>Age:</td>
-                <td>{contact.age}</td>
-              </tr>
-              <tr>
-                <td>Photo:</td>
-                <td>
-                  <img
-                    src={contact.photo}
-                    alt="Photo"
-                    style={{ maxWidth: '100px', maxHeight: '100px' }}
-                    className="img-fluid"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function App() {
   const [contacts, setContacts] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [detail, setDetail] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -78,7 +16,7 @@ function App() {
   });
   const [editingContact, setEditingContact] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [selectedContact, setSelectedContact] = useState(null);
   const tableRef = useRef(null);
 
   useEffect(() => {
@@ -102,18 +40,6 @@ function App() {
 
     fetchContacts();
   }, []);
-
-  useEffect(() => {
-    if (tableRef.current) {
-      $(tableRef.current).DataTable({
-        searching: true,
-        ordering: true,
-        paging: true,
-        lengthChange: true,
-        info: true
-      });
-    }
-  }, [contacts]); 
 
   const handleEdit = (contact) => {
     setEditingContact(contact);
@@ -169,9 +95,30 @@ function App() {
     }
   };
 
-  const handleViewDetail = (id) => {
-    setSelectedContactId(id);
-  };
+  useEffect(() => {
+    if (tableRef.current) {
+      $(tableRef.current).DataTable({
+        searching: true,
+        ordering: true,
+        paging: true,
+        lengthChange: true,
+        info: true
+      });
+    }
+  }, [contacts]);
+
+const handleViewDetail = async (id) => {
+  try {
+    console.log("Fetching contact detail for ID:", id);
+    const response = await axios.get(`https://contact.herokuapp.com/contact/${id}`);
+    console.log("Contact detail response:", response.data);
+    setSelectedContact(response.data.data);
+    setDetail(true);
+  } catch (error) {
+    console.error('Error fetching contact detail:', error);
+  }
+};
+
 
   return (
     <div className="App">
@@ -181,11 +128,9 @@ function App() {
         <div className="App-content mx-auto" style={{ maxWidth: '1000px' }}>
           <h2>Contact</h2>
           <button className="btn btn-primary mb-3" onClick={() => { setEditingContact(null); setShowModal(true); }}>Create</button>
-          {selectedContactId && <ContactDetail contactId={selectedContactId} />}
           <table ref={tableRef} className="table table-striped">
             <thead>
               <tr>
-                <th>No</th>
                 <th>ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
@@ -195,9 +140,8 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(contacts) && contacts.map((contact, index) => (
+              {Array.isArray(contacts) && contacts.map(contact => (
                 <tr key={contact.id}>
-                  <td>{index + 1}</td>
                   <td>{contact.id}</td>
                   <td>{contact.firstName}</td>
                   <td>{contact.lastName}</td>
@@ -206,7 +150,7 @@ function App() {
                     <img
                       src={contact.photo}
                       alt="Photo"
-                      style={{ maxWidth: '100px', maxHeight: '100px' }}
+                      style={{ maxWidth: '100px', maxHeight: '100px' }} 
                       className="img-fluid"
                     />
                   </td>
@@ -235,6 +179,55 @@ function App() {
               ))}
             </tbody>
           </table>
+          {selectedContact && (
+            <div className={`modal ${detail ? 'show' : ''}`} style={{ display: detail ? 'block' : 'none' }}>
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Contact Detail</h5>
+                    <button type="button" className="close" onClick={() => setDetail(false)}>
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div className="modal-body">
+                    <h2>Contact Detail</h2>
+                    <table className="table">
+                      <tbody>
+                        <tr>
+                          <td>ID:</td>
+                          <td>{selectedContact.id}</td>
+                        </tr>
+                        <tr>
+                          <td>First Name:</td>
+                          <td>{selectedContact.firstName}</td>
+                        </tr>
+                        <tr>
+                          <td>Last Name:</td>
+                          <td>{selectedContact.lastName}</td>
+                        </tr>
+                        <tr>
+                          <td>Age:</td>
+                          <td>{selectedContact.age}</td>
+                        </tr>
+                        <tr>
+                          <td>Photo:</td>
+                          <td>
+                            <img
+                              src={selectedContact.photo}
+                              alt="Photo"
+                              style={{ maxWidth: '100px', maxHeight: '100px' }} 
+                              className="img-fluid"
+                            /> 
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {showModal && <div className="modal-backdrop fade show"></div>}
         </div>
       )}
       <div className={`modal ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }}>
