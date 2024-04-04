@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css'; 
+import React, { useState, useEffect, useRef } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
+import $ from 'jquery';
+import 'datatables.net-bs4';
 
 function ContactDetail({ contactId }) {
   const [contact, setContact] = useState(null);
@@ -52,9 +54,9 @@ function ContactDetail({ contactId }) {
                   <img
                     src={contact.photo}
                     alt="Photo"
-                    style={{ maxWidth: '100px', maxHeight: '100px' }} 
+                    style={{ maxWidth: '100px', maxHeight: '100px' }}
                     className="img-fluid"
-                  /> 
+                  />
                 </td>
               </tr>
             </tbody>
@@ -77,6 +79,7 @@ function App() {
   const [editingContact, setEditingContact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedContactId, setSelectedContactId] = useState(null);
+  const tableRef = useRef(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -99,6 +102,18 @@ function App() {
 
     fetchContacts();
   }, []);
+
+  useEffect(() => {
+    if (tableRef.current) {
+      $(tableRef.current).DataTable({
+        searching: true,
+        ordering: true,
+        paging: true,
+        lengthChange: true,
+        info: true
+      });
+    }
+  }, [contacts]); 
 
   const handleEdit = (contact) => {
     setEditingContact(contact);
@@ -166,10 +181,11 @@ function App() {
         <div className="App-content mx-auto" style={{ maxWidth: '1000px' }}>
           <h2>Contact</h2>
           <button className="btn btn-primary mb-3" onClick={() => { setEditingContact(null); setShowModal(true); }}>Create</button>
-          {selectedContactId && <ContactDetail contactId={selectedContactId} />} 
-          <table className="table table-striped">
+          {selectedContactId && <ContactDetail contactId={selectedContactId} />}
+          <table ref={tableRef} className="table table-striped">
             <thead>
               <tr>
+                <th>No</th>
                 <th>ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
@@ -179,8 +195,9 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(contacts) && contacts.map(contact => (
+              {Array.isArray(contacts) && contacts.map((contact, index) => (
                 <tr key={contact.id}>
+                  <td>{index + 1}</td>
                   <td>{contact.id}</td>
                   <td>{contact.firstName}</td>
                   <td>{contact.lastName}</td>
@@ -189,7 +206,7 @@ function App() {
                     <img
                       src={contact.photo}
                       alt="Photo"
-                      style={{ maxWidth: '100px', maxHeight: '100px' }} 
+                      style={{ maxWidth: '100px', maxHeight: '100px' }}
                       className="img-fluid"
                     />
                   </td>
